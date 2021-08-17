@@ -5,24 +5,50 @@ Lod is a static site generator (SSG) with zero configuration.
 It only needs an `index.html` entry file.  
 Other files are found from there by walking HTML nodes and searching for local file references in `href` or `src` attributes.
 
+- [Install](#install)
+- [Usage](#usage)
+  - [Build](#build)
+  - [Watch and serve](#watch-and-serve)
+- [Content types](#content-types)
+  - [HTML](#html)
+    - [Layout](#layout)
+    - [Data](#data)
+  - [Styles](#styles)
+  - [Scripts](#scripts)
+  - [Others](#others)
+
 ## Install
 
-```sh
-go get github.com/alefunion/lod
+```
+$ go get github.com/alefunion/lod
 ```
 
 ## Usage
 
-Go to the project's root directory, write an `index.html` file and run:
+## Build
+
+Go to the project's root directory, write an `index.html` file and run `lod`:
 
 ```
-lod
+$ lod
+2021/12/12 12:12:12 ⚡️ SSG in 26ms
 ```
+
+## Watch and serve
 
 Watching for changes is also possible with the `watch` or `w` subcommand:
 
 ```
-lod w
+$ lod w
+2021/12/12 12:12:12 ⚡️ SSG in 26ms
+2021/12/12 12:12:12 🌐 Server listening on http://localhost:8080
+2021/12/12 12:12:12 ⏳ Watching for changes...
+```
+
+You can also provide another address to listen on just after the `watch` subcommand:
+
+```
+$ lod watch :3000
 ```
 
 ## Content types
@@ -55,8 +81,8 @@ layout: layout.html
 ---
 
 {{define "main"}}
-<h1>Example</h1>
-<p>Lorem ipsum.</p>
+	<h1>Example</h1>
+	<p>Lorem ipsum.</p>
 {{end}}
 ```
 
@@ -86,7 +112,7 @@ title: Test
 ---
 
 {{define "main"}}
-<p>{{ .title }} page</p>
+	<p>{{ .title }} page</p>
 {{end}}
 ```
 

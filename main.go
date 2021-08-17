@@ -18,6 +18,10 @@ func main() {
 
 	build()
 	if len(os.Args) > 1 && (os.Args[1] == "watch" || os.Args[1] == "w") {
+		if len(os.Args) > 2 {
+			serverAddr = os.Args[2]
+		}
+		serve()
 		watch()
 	}
 }

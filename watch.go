@@ -9,8 +9,6 @@ import (
 )
 
 func watch() {
-	logInfo("⏳ Watching for changes...")
-
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		log.Fatal(err)
@@ -57,5 +55,6 @@ func watch() {
 		return nil
 	})
 
+	logInfo("⏳ Watching for changes...")
 	<-watchDone
 }

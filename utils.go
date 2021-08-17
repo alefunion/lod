@@ -50,9 +50,9 @@ func logWarning(v ...interface{}) {
 }
 
 func logError(v ...interface{}) {
-	log.Print("🛑 ", color.New(color.FgRed).Sprint(v...))
+	log.Print("⭕️ ", color.New(color.FgRed).Sprint(v...))
 }
 
 func logFatal(v ...interface{}) {
-	log.Fatal("🛑 ", color.New(color.FgRed).Sprint(v...))
+	log.Fatal("❌ ", color.New(color.FgRed).Sprint(v...))
 }
