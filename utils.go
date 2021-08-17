@@ -3,12 +3,13 @@ package main
 import (
 	"crypto/md5"
 	"encoding/hex"
-	"fmt"
 	"io"
+	"log"
 	"net/url"
 	"os"
-	"os/exec"
 	"path/filepath"
+
+	"github.com/fatih/color"
 )
 
 func isRealtiveFile(path string) bool {
@@ -29,17 +30,29 @@ func hash(src io.Reader) string {
 	return hex.EncodeToString(hash.Sum(nil))[24:]
 }
 
-func runCmd(name string, arg ...string) {
-	cmd := exec.Command(name, arg...)
-	cmd.Stderr = os.Stderr
-	err := cmd.Run()
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-}
-
 func fileExists(fp string) bool {
 	_, err := os.Stat(fp)
 	return !os.IsNotExist(err)
+}
+
+// Logger
+
+func logInfo(v ...interface{}) {
+	log.Print(color.New(color.FgBlue).Sprint(v...))
+}
+
+func logSuccess(v ...interface{}) {
+	log.Print(color.New(color.FgGreen).Sprint(v...))
+}
+
+func logWarning(v ...interface{}) {
+	log.Print("⚠️  ", color.New(color.FgYellow).Sprint(v...))
+}
+
+func logError(v ...interface{}) {
+	log.Print("🛑 ", color.New(color.FgRed).Sprint(v...))
+}
+
+func logFatal(v ...interface{}) {
+	log.Fatal("🛑 ", color.New(color.FgRed).Sprint(v...))
 }

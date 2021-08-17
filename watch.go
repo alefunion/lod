@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -10,7 +9,7 @@ import (
 )
 
 func watch() {
-	fmt.Println("Watching for changes...")
+	logInfo("⏳ Watching for changes...")
 
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -32,7 +31,6 @@ func watch() {
 					build()
 				} else if ev.Op&fsnotify.Create == fsnotify.Create {
 					if ev.Name != outDir {
-						fmt.Println("add to watcher:", ev.Name)
 						watcher.Add(ev.Name)
 					}
 				}
@@ -50,11 +48,11 @@ func watch() {
 		if err != nil {
 			panic(err)
 		}
-		if filepath.SplitList(path)[0] == outDir {
+		if root := filepath.SplitList(path)[0]; root == outDir || root == "node_modules" {
 			return filepath.SkipDir
 		}
 		if err = watcher.Add(path); err != nil {
-			panic(err)
+			logFatal("Cannot add " + path + " to watcher: " + err.Error())
 		}
 		return nil
 	})

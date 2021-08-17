@@ -13,10 +13,16 @@ go get github.com/alefunion/lod
 
 ## Usage
 
-Go to the project's root directory and run:
+Go to the project's root directory, write an `index.html` file and run:
 
 ```
 lod
+```
+
+Watching for changes is also possible with the `watch` or `w` subcommand:
+
+```
+lod w
 ```
 
 ## Content types
@@ -49,8 +55,8 @@ layout: layout.html
 ---
 
 {{define "main"}}
-	<h1>Example</h1>
-	<p>Lorem ipsum.</p>
+<h1>Example</h1>
+<p>Lorem ipsum.</p>
 {{end}}
 ```
 
@@ -80,7 +86,7 @@ title: Test
 ---
 
 {{define "main"}}
-	<p>{{ .title }} page</p>
+<p>{{ .title }} page</p>
 {{end}}
 ```
 

@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"html/template"
 	"os"
 	"path"
@@ -37,8 +36,8 @@ func handleFile(fp string) string {
 	if !isRealtiveFile(fp) {
 		return fp
 	}
-	if _, err := os.Stat(fp); os.IsNotExist(err) {
-		fmt.Println("INFO:", fp, "doesn't exist")
+	if !fileExists(fp) {
+		logWarning(fp + " not found in project")
 		return fp
 	}
 

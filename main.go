@@ -16,11 +16,6 @@ func main() {
 		panic(err)
 	}
 
-	if !fileExists("index.html") {
-		fmt.Println("An index.html entry file at to root of the project is required")
-		os.Exit(0)
-	}
-
 	build()
 	if len(os.Args) > 1 && (os.Args[1] == "watch" || os.Args[1] == "w") {
 		watch()
@@ -28,9 +23,14 @@ func main() {
 }
 
 func build() {
+	if !fileExists("index.html") {
+		logError("An index.html entry file is required at to root of the project")
+		return
+	}
+
 	done = make(map[string]string) // Reset file URLs
 
 	startTime := time.Now()
 	handleFile("index.html")
-	fmt.Printf("Done in %dms\n", time.Now().Sub(startTime).Milliseconds())
+	logSuccess(fmt.Sprintf("⚡️ SSG in %dms", time.Now().Sub(startTime).Milliseconds()))
 }
