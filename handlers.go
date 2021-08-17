@@ -19,7 +19,7 @@ import (
 )
 
 // Contains all filepaths already handled with their new path for HTML use.
-var done = make(map[string]string)
+var done map[string]string
 
 // Minifier
 var min = minify.New()

@@ -38,3 +38,8 @@ func runCmd(name string, arg ...string) {
 		os.Exit(1)
 	}
 }
+
+func fileExists(fp string) bool {
+	_, err := os.Stat(fp)
+	return !os.IsNotExist(err)
+}

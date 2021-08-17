@@ -9,8 +9,6 @@ import (
 const outDir = "out"
 
 func main() {
-	startTime := time.Now()
-
 	if err := os.RemoveAll(outDir); err != nil {
 		panic(err)
 	}
@@ -18,7 +16,21 @@ func main() {
 		panic(err)
 	}
 
-	handleFile("index.html")
+	if !fileExists("index.html") {
+		fmt.Println("An index.html entry file at to root of the project is required")
+		os.Exit(0)
+	}
 
-	fmt.Println("Done in", time.Now().Sub(startTime))
+	build()
+	if len(os.Args) > 1 && (os.Args[1] == "watch" || os.Args[1] == "w") {
+		watch()
+	}
+}
+
+func build() {
+	done = make(map[string]string) // Reset file URLs
+
+	startTime := time.Now()
+	handleFile("index.html")
+	fmt.Printf("Done in %dms\n", time.Now().Sub(startTime).Milliseconds())
 }
