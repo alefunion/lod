@@ -98,7 +98,14 @@ func handleHTML(fp string) string {
 
 // Handle frontmatter and returns the HTML template embedded in its layout(s).
 func parseWithLayout(fp string, data map[string]interface{}) (*template.Template, map[string]interface{}) {
-	f, _ := os.Open(fp)
+	f, err := os.Open(fp)
+	if err != nil {
+		if os.IsNotExist(err) {
+			logError(fp, " doesn't exist")
+			return template.New("page"), data
+		}
+		panic(err)
+	}
 	defer f.Close()
 
 	var front map[string]interface{}
