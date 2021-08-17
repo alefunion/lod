@@ -13,11 +13,20 @@ import (
 	"github.com/bep/golibsass/libsass"
 	"github.com/evanw/esbuild/pkg/api"
 	es "github.com/evanw/esbuild/pkg/api"
+	"github.com/tdewolff/minify/v2"
+	htmlmin "github.com/tdewolff/minify/v2/html"
 	"golang.org/x/net/html"
 )
 
 // Contains all filepaths already handled with their new path for HTML use.
 var done = make(map[string]string)
+
+// Minifier
+var min = minify.New()
+
+func init() {
+	min.AddFunc("text/html", htmlmin.Minify)
+}
 
 // fp is the filepath relative to working directory.
 // Returns the final path inside HTML build.
@@ -76,7 +85,12 @@ func handleHTML(fp string) string {
 	if err != nil {
 		panic(err)
 	}
-	if err = html.Render(f, doc); err != nil {
+
+	b.Reset()
+	if err = html.Render(&b, doc); err != nil {
+		panic(err)
+	}
+	if err = min.Minify("text/html", f, &b); err != nil {
 		panic(err)
 	}
 
