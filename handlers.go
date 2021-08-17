@@ -169,17 +169,29 @@ func handleOther(fp string) string {
 			{Name: api.EngineSafari, Version: "12"},
 			{Name: api.EngineEdge, Version: "44"},
 		},
-	}
-
-	// Use file loader for extensions unknown by esbuild
-	ext := filepath.Ext(fp)
-	switch ext {
-	case ".js", ".cjs", ".mjs", ".jsx", ".ts", ".tsx", ".json", ".css":
-		break
-	default:
-		opts.Loader = map[string]es.Loader{
-			ext: es.LoaderFile,
-		}
+		Loader: map[string]es.Loader{
+			".aac":   es.LoaderFile,
+			".avi":   es.LoaderFile,
+			".csv":   es.LoaderFile,
+			".eot":   es.LoaderFile,
+			".gif":   es.LoaderFile,
+			".ico":   es.LoaderFile,
+			".jpeg":  es.LoaderFile,
+			".jpg":   es.LoaderFile,
+			".mp3":   es.LoaderFile,
+			".mpeg":  es.LoaderFile,
+			".otf":   es.LoaderFile,
+			".png":   es.LoaderFile,
+			".pdf":   es.LoaderFile,
+			".svg":   es.LoaderFile,
+			".ttf":   es.LoaderFile,
+			".txt":   es.LoaderFile,
+			".webm":  es.LoaderFile,
+			".webp":  es.LoaderFile,
+			".woff":  es.LoaderFile,
+			".woff2": es.LoaderFile,
+			".zip":   es.LoaderFile,
+		},
 	}
 
 	res := es.Build(opts)

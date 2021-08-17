@@ -32,12 +32,12 @@ A layout is an HTML file containing a named `block` (used as a placeholder):
 ```html
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>Example</title>
-  </head>
-  <body>
-    {{ block "main" . }}{{ end }}
-  </body>
+	<head>
+		<title>Example</title>
+	</head>
+	<body>
+		{{ block "main" . }}{{ end }}
+	</body>
 </html>
 ```
 
@@ -49,8 +49,8 @@ layout: layout.html
 ---
 
 {{define "main"}}
-<h1>Example</h1>
-<p>Lorem ipsum.</p>
+	<h1>Example</h1>
+	<p>Lorem ipsum.</p>
 {{end}}
 ```
 
@@ -63,13 +63,13 @@ Frontmatter's content can be accessed inside the HTML body. It is also passed to
 ```html
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>Example{{ if .title }} – {{ .title }}{{ end }}</title>
-  </head>
-  <body>
-    <h1>{{ .title }}</h1>
-    {{ block "main" . }}{{ end }}
-  </body>
+	<head>
+		<title>Example{{ if .title }} – {{ .title }}{{ end }}</title>
+	</head>
+	<body>
+		<h1>{{ .title }}</h1>
+		{{ block "main" . }}{{ end }}
+	</body>
 </html>
 ```
 
@@ -80,7 +80,7 @@ title: Test
 ---
 
 {{define "main"}}
-<p>{{ .title }} page</p>
+	<p>{{ .title }} page</p>
 {{end}}
 ```
 
