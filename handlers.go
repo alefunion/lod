@@ -232,7 +232,15 @@ func handleOther(fp string) string {
 	if err != nil {
 		panic(err)
 	}
-	finalFilepath := strings.TrimPrefix(res.OutputFiles[0].Path, filepath.Join(wd, outDir))
+	var finalFilepath string
+	if _, ok := esLoaderMap[filepath.Ext(fp)]; ok {
+		// esbuild used the file loader: the final file is first in slice
+		finalFilepath = res.OutputFiles[0].Path
+	} else {
+		// esbuild parsed the entry and generated assets: the final file is last in slice
+		finalFilepath = res.OutputFiles[len(res.OutputFiles)-1].Path
+	}
+	finalFilepath = strings.TrimPrefix(finalFilepath, filepath.Join(wd, outDir))
 	finalPath := path.Clean(path.Join(filepath.SplitList(finalFilepath)...))
 	done[fp] = finalPath
 	return finalPath
