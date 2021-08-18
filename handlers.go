@@ -157,7 +157,8 @@ func handleSass(fp string) string {
 	transpiler, _ := libsass.New(libsass.Options{})
 	trans, err := transpiler.Execute(string(fb))
 	if err != nil {
-		panic(err)
+		logError("Sass error in ", fp, ": ", err)
+		return fp
 	}
 
 	// Write CSS result in a temporary file at the root of the project
