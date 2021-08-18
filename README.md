@@ -131,6 +131,8 @@ Just reference the file in the HTML:
 <link rel="stylesheet" href="main.scss" />
 ```
 
+As inside HTML, filepaths of assets referenced in style files must be relative to project's directory.
+
 ### Scripts
 
 JS and TS files are automatically minified and bundled.  

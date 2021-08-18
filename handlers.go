@@ -45,7 +45,7 @@ func handleFile(fp string) string {
 	case ".html":
 		return handleHTML(fp)
 	case ".sass", ".scss":
-		return handleSASS(fp)
+		return handleSass(fp)
 	default:
 		return handleOther(fp)
 	}
@@ -145,26 +145,29 @@ func walkNode(n *html.Node) {
 	}
 }
 
-// SASS
+// Sass
 
-func handleSASS(fp string) string {
+func handleSass(fp string) string {
 	fb, err := os.ReadFile(fp)
 	if err != nil {
 		panic(err)
 	}
 
+	// Transpile Sass
 	transpiler, _ := libsass.New(libsass.Options{})
 	trans, err := transpiler.Execute(string(fb))
 	if err != nil {
 		panic(err)
 	}
 
-	base := strings.TrimSuffix(fp, filepath.Ext(fp))
-	tmpfp := filepath.Join(outDir, base+".css")
-	os.WriteFile(tmpfp, []byte(trans.CSS), 0755)
-	finalPath := handleOther(tmpfp)
-	os.Remove(tmpfp)
-	return finalPath
+	// Write CSS result in a temporary file at the root of the project
+	base := strings.TrimSuffix(filepath.Base(fp), filepath.Ext(fp))
+	tmpfp := filepath.Join("~" + base + ".css")
+	if err = os.WriteFile(tmpfp, []byte(trans.CSS), 0755); err != nil {
+		panic(err)
+	}
+	defer os.Remove(tmpfp) // Clean file
+	return handleOther(tmpfp)
 }
 
 // Other file types
@@ -200,7 +203,6 @@ func handleOther(fp string) string {
 		EntryNames:        "[name].[hash]",
 		ChunkNames:        "[name].[hash]",
 		AssetNames:        "[name].[hash]",
-		Outdir:            outDir,
 		Bundle:            true,
 		Write:             true,
 		LogLevel:          es.LogLevelError,
@@ -215,6 +217,12 @@ func handleOther(fp string) string {
 			{Name: api.EngineEdge, Version: "44"},
 		},
 		Loader: esLoaderMap,
+	}
+
+	if fp[0] == '~' {
+		opts.Outfile = filepath.Join(outDir, filepath.Base(fp[1:]))
+	} else {
+		opts.Outfile = filepath.Join(outDir, filepath.Base(fp))
 	}
 
 	res := es.Build(opts)
