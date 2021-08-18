@@ -25,22 +25,22 @@ $ go get github.com/alefunion/lod
 
 ## Usage
 
-## Build
+### Build
 
 Go to the project's root directory, write an `index.html` file and run `lod`:
 
 ```
 $ lod
-2021/12/12 12:12:12 ⚡️ SSG in 26ms
+2021/12/12 12:12:12 ⚡️ SSG in 12ms
 ```
 
-## Watch and serve
+### Watch and serve
 
 Watching for changes is also possible with the `watch` or `w` subcommand:
 
 ```
 $ lod w
-2021/12/12 12:12:12 ⚡️ SSG in 26ms
+2021/12/12 12:12:12 ⚡️ SSG in 12ms
 2021/12/12 12:12:12 🌐 Server listening on http://localhost:8080
 2021/12/12 12:12:12 ⏳ Watching for changes...
 ```
