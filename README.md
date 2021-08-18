@@ -2,20 +2,24 @@
 
 Lod is a static site generator (SSG) with zero configuration.
 
-It only needs an `index.html` entry file.  
-Other files are found from there by walking HTML nodes and searching for local file references in `href` or `src` attributes.
+It lets you write plain old HTML and gradually use layouts, preprocessed CSS and ES6 JavaScript just by referencing them from HTML.  
+
+No boilerplate is required.  
+Lod just needs an `index.html` entry file.
+
+The output build will be optimized, minified an ready to deploy.
 
 - [Install](#install)
 - [Usage](#usage)
-  - [Build](#build)
-  - [Watch and serve](#watch-and-serve)
+	- [Build](#build)
+	- [Watch and serve](#watch-and-serve)
 - [Content types](#content-types)
-  - [HTML](#html)
-    - [Layout](#layout)
-    - [Data](#data)
-  - [Styles](#styles)
-  - [Scripts](#scripts)
-  - [Others](#others)
+	- [HTML](#html)
+		- [Layout](#layout)
+		- [Data](#data)
+	- [Styles](#styles)
+	- [Scripts](#scripts)
+	- [Others](#others)
 
 ## Install
 
@@ -36,16 +40,17 @@ $ lod
 
 ### Watch and serve
 
-Watching for changes is also possible with the `watch` or `w` subcommand:
+The `watch` or `w` subcommand makes Lod watch for changes and generate a new build when required:
 
 ```
 $ lod w
 2021/12/12 12:12:12 ⚡️ SSG in 12ms
-2021/12/12 12:12:12 🌐 Server listening on http://localhost:8080
+2021/12/12 12:12:12 🌐 Served at http://localhost:8080
 2021/12/12 12:12:12 ⏳ Watching for changes...
 ```
 
-You can also provide another address to listen on just after the `watch` subcommand:
+At the same time, a file server is run over the output directory.  
+You can provide another address to listen on, just after the `watch` subcommand:
 
 ```
 $ lod watch :3000
@@ -55,7 +60,7 @@ $ lod watch :3000
 
 ### HTML
 
-HTML files are handled as Go templates and can start with a frontmatter.
+HTML files are handled as Go templates and can start with a front matter.
 
 #### Layout
 
@@ -119,8 +124,8 @@ title: Test
 ### Styles
 
 CSS files are automatically minified and bundled.  
-The official Sass/Scss compiler is alos built in.  
-Just make a reference to the entry file:
+Same for Sass/Scss files for which the compiler is built in.  
+Just reference the file in the HTML:
 
 ```html
 <link rel="stylesheet" href="main.scss" />

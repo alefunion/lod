@@ -20,7 +20,7 @@ func startServer(ready chan bool) {
 	if host[0] == ':' {
 		host = "localhost" + serverAddr
 	}
-	logInfo("🌐 Server listening on http://" + host)
+	logInfo("🌐 Served at http://" + host)
 
 	ready <- true
 	if err := http.ListenAndServe(serverAddr, nil); err != nil {
