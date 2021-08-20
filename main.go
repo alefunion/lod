@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -36,5 +38,34 @@ func build() {
 
 	startTime := time.Now()
 	handleFile("index.html")
+	copySpecialFiles()
 	logSuccess(fmt.Sprintf("⚡️ SSG in %dms", time.Now().Sub(startTime).Milliseconds()))
+}
+
+// Copy potential special files to out directory that are generally not referenced in HTML but useful for the build
+func copySpecialFiles() {
+	for fn := range map[string]struct{}{
+		".htaccess":  {},
+		"robots.txt": {},
+	} {
+		from, err := os.Open(fn)
+		if err != nil {
+			if os.IsNotExist(err) {
+				continue
+			}
+			panic(err)
+		}
+		defer from.Close()
+
+		to, err := os.Create(filepath.Join(outDir, fn))
+		if err != nil {
+			panic(err)
+		}
+		defer to.Close()
+
+		_, err = io.Copy(to, from)
+		if err != nil {
+			panic(err)
+		}
+	}
 }
