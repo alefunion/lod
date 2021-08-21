@@ -102,7 +102,7 @@ func parseWithLayout(fp string, data map[string]interface{}) (*template.Template
 	if err != nil {
 		if os.IsNotExist(err) {
 			logError(fp, " doesn't exist")
-			return template.New("page"), data
+			return template.New(""), data
 		}
 		panic(err)
 	}
@@ -122,7 +122,7 @@ func parseWithLayout(fp string, data map[string]interface{}) (*template.Template
 		data[k] = v
 	}
 
-	page := template.New("page")
+	page := template.New("")
 	if layout, _ := front["layout"].(string); layout != "" {
 		page, data = parseWithLayout(layout, data)
 	}
