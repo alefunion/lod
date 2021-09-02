@@ -42,14 +42,14 @@ func handleFile(fp string) string {
 	}
 
 	if newfp, ok := done[fp]; ok {
-		return newfp
+		return newfp + suffix
 	}
 	if fp == "" || !isRealtiveFile(fp) {
-		return fp
+		return fp + suffix
 	}
 	if !fileExists(fp) {
 		logWarning(fp + " not found in project")
-		return fp
+		return fp + suffix
 	}
 
 	switch filepath.Ext(fp) {
