@@ -31,6 +31,16 @@ func init() {
 // Returns the final path inside HTML build.
 func handleFile(fp string) string {
 	fp = strings.TrimSpace(fp)
+
+	var suffix string
+	if i := strings.IndexByte(fp, '?'); i > -1 {
+		suffix = fp[i:]
+		fp = fp[:i]
+	} else if i := strings.IndexByte(fp, '#'); i > -1 {
+		suffix = fp[i:]
+		fp = fp[:i]
+	}
+
 	if newfp, ok := done[fp]; ok {
 		return newfp
 	}
@@ -44,7 +54,7 @@ func handleFile(fp string) string {
 
 	switch filepath.Ext(fp) {
 	case ".html":
-		return handleHTML(fp)
+		return handleHTML(fp) + suffix
 	case ".sass", ".scss":
 		return handleSass(fp)
 	default:
