@@ -2,7 +2,7 @@
 
 Lod is a static site generator (SSG) with zero configuration.
 
-It lets you write plain old HTML and gradually use layouts, preprocessed CSS and ES6 JavaScript just by referencing them from HTML.  
+It lets you write plain old HTML and gradually use layouts, preprocessed CSS and ES6 JavaScript just by referencing them from HTML.
 
 No boilerplate is required.  
 Lod just needs an `index.html` entry file.

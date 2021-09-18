@@ -133,7 +133,7 @@ func parseWithLayout(fp string, data map[string]interface{}) (*template.Template
 		data[k] = v
 	}
 
-	page := template.New("")
+	page := template.New("").Funcs(templateFuncs())
 	if layout, _ := front["layout"].(string); layout != "" {
 		page, data = parseWithLayout(layout, data)
 	}
