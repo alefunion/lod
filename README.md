@@ -2,12 +2,12 @@
 
 Lod is a static site generator (SSG) with zero configuration.
 
-It lets you write plain old HTML and gradually use layouts, preprocessed CSS and ES6 JavaScript just by referencing them from HTML.
+It lets you write plain old HTML and gradually add layouts, preprocessed CSS and ES6 JavaScript just by referencing them from HTML.
 
 No boilerplate is required.  
 Lod just needs an `index.html` entry file.
 
-The output build will be optimized, minified an ready to deploy.
+The output build will be optimized, minified and ready to deploy.
 
 - [Install](#install)
 - [Usage](#usage)
@@ -73,12 +73,12 @@ A layout is an HTML file containing a named `block` (used as a placeholder):
 		<title>Example</title>
 	</head>
 	<body>
-		{{ block "main" . }}{{ end }}
+		{{block "main" .}}{{end}}
 	</body>
 </html>
 ```
 
-To use a layout, start the HTML file with a frontmatter containing and a `layout` key referencing the layout file, relative to project's root:
+To use a layout, start the HTML file with a frontmatter containing a `layout` key referencing the layout file, relative to project's root:
 
 ```html
 ---
@@ -101,11 +101,11 @@ Frontmatter's content can be accessed inside the HTML body. It is also passed to
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>Example{{ if .title }} – {{ .title }}{{ end }}</title>
+		<title>Example{{if .title}} – {{.title}}{{end}}</title>
 	</head>
 	<body>
-		<h1>{{ .title }}</h1>
-		{{ block "main" . }}{{ end }}
+		<h1>{{.title}}</h1>
+		{{block "main" .}}{{end}}
 	</body>
 </html>
 ```
@@ -117,7 +117,7 @@ title: Test
 ---
 
 {{define "main"}}
-	<p>{{ .title }} page</p>
+	<p>{{.title}} page</p>
 {{end}}
 ```
 
