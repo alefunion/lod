@@ -10,7 +10,6 @@ import (
 
 	"github.com/adrg/frontmatter"
 	"github.com/bep/golibsass/libsass"
-	"github.com/evanw/esbuild/pkg/api"
 	es "github.com/evanw/esbuild/pkg/api"
 	"github.com/tdewolff/minify/v2"
 	htmlmin "github.com/tdewolff/minify/v2/html"
@@ -223,10 +222,10 @@ func handleOther(fp string) string {
 		MinifyIdentifiers: true,
 		MinifySyntax:      true,
 		Engines: []es.Engine{
-			{Name: api.EngineChrome, Version: "62"},
-			{Name: api.EngineFirefox, Version: "69"},
-			{Name: api.EngineSafari, Version: "12"},
-			{Name: api.EngineEdge, Version: "44"},
+			{Name: es.EngineChrome, Version: "62"},
+			{Name: es.EngineFirefox, Version: "69"},
+			{Name: es.EngineSafari, Version: "12"},
+			{Name: es.EngineEdge, Version: "44"},
 		},
 		Loader: esLoaderMap,
 	}
