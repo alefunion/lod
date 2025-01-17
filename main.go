@@ -39,7 +39,7 @@ func build() {
 	startTime := time.Now()
 	handleFile("index.html")
 	copySpecialFiles()
-	logSuccess(fmt.Sprintf("⚡️ SSG in %dms", time.Now().Sub(startTime).Milliseconds()))
+	logSuccess(fmt.Sprintf("⚡️ SSG in %dms", time.Since(startTime).Milliseconds()))
 }
 
 // Copy potential special files to out directory that are generally not referenced in HTML but useful for the build
