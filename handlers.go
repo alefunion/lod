@@ -2,7 +2,11 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"html/template"
+	"io"
+	"log"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -10,55 +14,106 @@ import (
 
 	"github.com/adrg/frontmatter"
 	"github.com/bep/golibsass/libsass"
-	es "github.com/evanw/esbuild/pkg/api"
+	"github.com/gosimple/slug"
 	"github.com/tdewolff/minify/v2"
+	cssmin "github.com/tdewolff/minify/v2/css"
 	htmlmin "github.com/tdewolff/minify/v2/html"
 	"golang.org/x/net/html"
 )
 
 // Contains all filepaths already handled with their new path for HTML use.
-var done map[string]string
+var processedFiles map[string]string
 
 // Minifier
 var min = minify.New()
 
+// SASS transpiler
+var sassTranspiler libsass.Transpiler
+
 func init() {
 	min.AddFunc("text/html", htmlmin.Minify)
+	min.AddFunc("text/css", cssmin.Minify)
+
+	// Prepare SASS transpiler
+	var err error
+	if sassTranspiler, err = libsass.New(libsass.Options{}); err != nil {
+		log.Panic(err)
+	}
 }
 
-// fp is the filepath relative to working directory.
-// Returns the final path inside HTML build.
-func handleFile(fp string) string {
-	fp = strings.TrimSpace(fp)
+// processSource processes a source reference (`index.html` an subsequent `href`, `src`, etc.).
+// If `src` references a file in the project, the file is processed
+// and its final path in outDir is returned with the original querystring or fragment (if any).
+func processSource(src string) string {
+	src = strings.TrimSpace(src)
 
-	var suffix string
-	if i := strings.IndexByte(fp, '?'); i > -1 {
-		suffix = fp[i:]
-		fp = fp[:i]
-	} else if i := strings.IndexByte(fp, '#'); i > -1 {
-		suffix = fp[i:]
-		fp = fp[:i]
+	u, err := url.Parse(src)
+	if err != nil {
+		logError("Invalid URL encountered: ", src)
+		return src
 	}
 
-	if newfp, ok := done[fp]; ok {
-		return newfp + suffix
-	}
-	if fp == "" || !isRealtiveFile(fp) {
-		return fp + suffix
-	}
-	if !fileExists(fp) {
-		logWarning(fp + " not found in project")
-		return fp + suffix
+	// If src is absolute, it's not a project file reference: return as is
+	if u.IsAbs() || filepath.IsAbs(u.Path) {
+		return u.String()
 	}
 
-	switch filepath.Ext(fp) {
+	// If file has already been processed, return the complete URL with its new path
+	if newPath, ok := processedFiles[u.Path]; ok {
+		u.Path = newPath
+		return u.String()
+	}
+
+	// Open file
+	f, err := os.Open(u.Path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			logError(u.Path, " referenced but not found in project")
+			return u.String()
+		}
+		logError("Cannot open "+u.Path+": ", err)
+		return u.String()
+	}
+	defer f.Close()
+
+	// Process file according to its extension
+	b := new(bytes.Buffer)
+	ext := filepath.Ext(u.Path)
+	switch ext {
 	case ".html":
-		return handleHTML(fp) + suffix
+		return handleHTML(u.Path)
+	case ".css":
+		if err = processCSS(b, f); err != nil {
+			return u.String()
+		}
 	case ".sass", ".scss":
-		return handleSass(fp)
+		if err = processSass(b, f); err != nil {
+			return u.String()
+		}
+		ext = ".css"
 	default:
-		return handleOther(fp)
+		// For other file types, just copy
+		if _, err = io.Copy(b, f); err != nil {
+			logFatal("Cannot copy "+u.Path+": ", err)
+			return u.String()
+		}
 	}
+
+	// Set new filename
+	u.Path = fmt.Sprintf("/%s.%s%s",
+		slug.Make(strings.TrimSuffix(path.Base(u.Path), path.Ext(u.Path))),
+		smallHash(bytes.NewReader(b.Bytes())),
+		ext,
+	)
+
+	// Write file to outDir
+	if err = os.WriteFile(filepath.Join(outDir, u.Path), b.Bytes(), 0644); err != nil {
+		logFatal(err)
+	}
+
+	// Store the new path in processedFiles
+	processedFiles[f.Name()] = u.Path
+	return u.String()
 }
 
 // HTML
@@ -69,24 +124,29 @@ func handleHTML(fp string) string {
 			strings.TrimSuffix(fp, "index.html"),
 			".html"))
 
-	// Done must be added before handling other *.html files to avoid infinite loop on cyclic references.
+	// Standardize path
+	// FIXME: Use filepath.Clean until finally returning a path
 	finalPath := path.Clean(path.Join(filepath.SplitList(finalFilepath)...))
-	done[fp] = finalPath
 
-	// Step 1: Parse template
+	// Done must be added before handling other *.html files to avoid infinite loop on cyclic references
+	processedFiles[fp] = finalPath
+
+	// Parse template
 	tmpl, data := parseWithLayout(fp, nil)
 
-	// Step 2: Handle other files in generated template
 	var b bytes.Buffer
 	if err := tmpl.Execute(&b, data); err != nil {
 		logFatal("Cannot execute ", fp, ": ", err)
 	}
+
+	// Handle other files in generated template
 	doc, err := html.Parse(&b)
 	if err != nil {
 		panic(err)
 	}
 	walkNode(doc)
 
+	// Create output file
 	if err = os.MkdirAll(filepath.Join(outDir, finalFilepath), 0755); err != nil {
 		panic(err)
 	}
@@ -95,7 +155,8 @@ func handleHTML(fp string) string {
 		panic(err)
 	}
 
-	b.Reset()
+	// Minify HTML and write to file
+	b.Reset() // Reuse buffer
 	if err = html.Render(&b, doc); err != nil {
 		panic(err)
 	}
@@ -145,7 +206,7 @@ func walkNode(n *html.Node) {
 	if n.Type == html.ElementNode {
 		for i, v := range n.Attr {
 			if v.Key == "href" || v.Key == "src" {
-				n.Attr[i].Val = handleFile(v.Val)
+				n.Attr[i].Val = processSource(v.Val)
 			}
 		}
 	}
@@ -155,112 +216,28 @@ func walkNode(n *html.Node) {
 	}
 }
 
-// Sass
+// CSS
 
-func handleSass(fp string) string {
-	fb, err := os.ReadFile(fp)
-	if err != nil {
-		panic(err)
-	}
-
-	// Transpile Sass
-	transpiler, _ := libsass.New(libsass.Options{})
-	trans, err := transpiler.Execute(string(fb))
-	if err != nil {
-		logError("Sass error in ", fp, ": ", err)
-		return fp
-	}
-
-	// Write CSS result in a temporary file at the root of the project
-	base := strings.TrimSuffix(filepath.Base(fp), filepath.Ext(fp))
-	tmpfp := filepath.Join("~" + base + ".css")
-	if err = os.WriteFile(tmpfp, []byte(trans.CSS), 0755); err != nil {
-		panic(err)
-	}
-	defer os.Remove(tmpfp) // Clean file
-	return handleOther(tmpfp)
+func processCSS(w io.Writer, r io.Reader) error {
+	return min.Minify("text/css", w, r)
 }
 
-// Other file types
+// Sass
 
-func handleOther(fp string) string {
-	esLoaderMap := map[string]es.Loader{
-		".aac":   es.LoaderFile,
-		".avi":   es.LoaderFile,
-		".csv":   es.LoaderFile,
-		".eot":   es.LoaderFile,
-		".gif":   es.LoaderFile,
-		".ico":   es.LoaderFile,
-		".jpeg":  es.LoaderFile,
-		".jpg":   es.LoaderFile,
-		".mp3":   es.LoaderFile,
-		".mp4":   es.LoaderFile,
-		".mpeg":  es.LoaderFile,
-		".otf":   es.LoaderFile,
-		".png":   es.LoaderFile,
-		".pdf":   es.LoaderFile,
-		".svg":   es.LoaderFile,
-		".ttf":   es.LoaderFile,
-		".txt":   es.LoaderFile,
-		".webm":  es.LoaderFile,
-		".webp":  es.LoaderFile,
-		".woff":  es.LoaderFile,
-		".woff2": es.LoaderFile,
-		".zip":   es.LoaderFile,
-	}
-
-	opts := es.BuildOptions{
-		EntryPoints:       []string{fp},
-		EntryNames:        "[name].[hash]",
-		ChunkNames:        "[name].[hash]",
-		AssetNames:        "[name].[hash]",
-		Bundle:            true,
-		Write:             true,
-		LogLevel:          es.LogLevelError,
-		LegalComments:     es.LegalCommentsNone,
-		MinifyWhitespace:  true,
-		MinifyIdentifiers: true,
-		MinifySyntax:      true,
-		Engines: []es.Engine{
-			{Name: es.EngineChrome, Version: "62"},
-			{Name: es.EngineFirefox, Version: "69"},
-			{Name: es.EngineSafari, Version: "12"},
-			{Name: es.EngineEdge, Version: "44"},
-		},
-		Loader: esLoaderMap,
-	}
-
-	if fp[0] == '~' {
-		opts.Outfile = filepath.Join(outDir, filepath.Base(fp[1:]))
-	} else {
-		opts.Outfile = filepath.Join(outDir, filepath.Base(fp))
-	}
-
-	res := es.Build(opts)
-	if len(res.Errors) > 0 {
-		return fp
-	}
-
-	// Remove unused *.js file generated by esbuild when using the file loader
-	if _, ok := esLoaderMap[filepath.Ext(fp)]; ok {
-		os.Remove(res.OutputFiles[1].Path)
-	}
-
-	// Gerenate final path for HTML use
-	wd, err := os.Getwd()
+func processSass(w io.Writer, r io.Reader) error {
+	// Read input content for transpilation
+	b, err := io.ReadAll(r)
 	if err != nil {
-		panic(err)
+		return err
 	}
-	var finalFilepath string
-	if _, ok := esLoaderMap[filepath.Ext(fp)]; ok {
-		// esbuild used the file loader: the final file is first in slice
-		finalFilepath = res.OutputFiles[0].Path
-	} else {
-		// esbuild parsed the entry and generated assets: the final file is last in slice
-		finalFilepath = res.OutputFiles[len(res.OutputFiles)-1].Path
+
+	// Transpile
+	res, err := sassTranspiler.Execute(string(b))
+	if err != nil {
+		logFatal(err)
+		return err
 	}
-	finalFilepath = strings.TrimPrefix(finalFilepath, filepath.Join(wd, outDir))
-	finalPath := path.Clean(path.Join(filepath.SplitList(finalFilepath)...))
-	done[fp] = finalPath
-	return finalPath
+
+	// Minify
+	return min.Minify("text/css", w, strings.NewReader(res.CSS))
 }

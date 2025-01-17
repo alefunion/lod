@@ -34,10 +34,10 @@ func build() {
 		return
 	}
 
-	done = make(map[string]string) // Reset file URLs
+	processedFiles = make(map[string]string) // Reset file URLs
 
 	startTime := time.Now()
-	handleFile("index.html")
+	processSource("index.html")
 	copySpecialFiles()
 	logSuccess(fmt.Sprintf("⚡️ SSG in %dms", time.Since(startTime).Milliseconds()))
 }

@@ -13,7 +13,7 @@ import (
 	"github.com/fatih/color"
 )
 
-func isRealtiveFile(path string) bool {
+func isFilepathRelative(path string) bool {
 	if filepath.IsAbs(path) {
 		return false
 	}
@@ -23,12 +23,13 @@ func isRealtiveFile(path string) bool {
 	return true
 }
 
-func hash(src io.Reader) string {
-	hash := md5.New()
-	if _, err := io.Copy(hash, src); err != nil {
-		panic(err)
+// smallHash returns an 8-byte hash of the reader content.
+func smallHash(r io.Reader) string {
+	hasher := md5.New()
+	if _, err := io.Copy(hasher, r); err != nil {
+		log.Fatal(err)
 	}
-	return hex.EncodeToString(hash.Sum(nil))[24:]
+	return hex.EncodeToString(hasher.Sum(nil))[24:]
 }
 
 func fileExists(fp string) bool {
@@ -39,29 +40,29 @@ func fileExists(fp string) bool {
 // Logger
 
 func logInfo(v ...interface{}) {
-	log.Print(color.New(color.FgBlue).Sprint(v...))
+	log.Println(color.New(color.FgBlue).Sprintln(v...))
 }
 
 func logSuccess(v ...interface{}) {
-	log.Print(color.New(color.FgGreen).Sprint(v...))
+	log.Println(color.New(color.FgGreen).Sprintln(v...))
 }
 
 func logWarning(v ...interface{}) {
-	log.Print("⚠️  ", color.New(color.FgYellow).Sprint(v...))
+	log.Println("⚠️  ", color.New(color.FgYellow).Sprintln(v...))
 }
 
 func logError(v ...interface{}) {
-	log.Print("⭕️ ", color.New(color.FgRed).Sprint(v...))
+	log.Println("⭕️ ", color.New(color.FgRed).Sprintln(v...))
 }
 
 func logFatal(v ...interface{}) {
-	log.Fatal("❌ ", color.New(color.FgRed).Sprint(v...))
+	log.Fatal("❌ ", color.New(color.FgRed).Sprintln(v...))
 }
 
 func templateFuncs() template.FuncMap {
 	return template.FuncMap{
 		"link": func(fp string) string {
-			return handleFile(fp)
+			return processSource(fp)
 		},
 
 		"favicon": func(path string) template.HTML {
@@ -69,7 +70,7 @@ func templateFuncs() template.FuncMap {
 		},
 
 		"script": func(path string) template.HTML {
-			if isRealtiveFile(path) {
+			if isFilepathRelative(path) {
 				return template.HTML(`<link rel="preload" href="` + path + `" as="script"><script defer src="` + path + `"></script>`)
 			}
 			url, err := url.Parse(path)
@@ -80,7 +81,7 @@ func templateFuncs() template.FuncMap {
 		},
 
 		"style": func(path string) template.HTML {
-			if isRealtiveFile(path) {
+			if isFilepathRelative(path) {
 				return template.HTML(`<link rel="preload" href="` + path + `" as="style"><link rel="stylesheet" href="` + path + `">`)
 			}
 			url, err := url.Parse(path)
