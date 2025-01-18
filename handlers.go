@@ -84,13 +84,12 @@ func processSource(src string) string {
 		return handleHTML(u.Path)
 	case ".css":
 		if err = processCSS(b, f); err != nil {
-			return u.String()
+			logFatal("Cannot process "+u.Path+":", err)
 		}
 	case ".sass", ".scss":
 		if err = processSass(b, f); err != nil {
-			return u.String()
+			logFatal("Cannot process "+u.Path+":", err)
 		}
-		ext = ".css"
 	default:
 		// For other file types, just copy
 		if _, err = io.Copy(b, f); err != nil {
@@ -117,6 +116,14 @@ func processSource(src string) string {
 }
 
 // HTML
+
+func processHTML(w io.Writer, r io.Reader) error {
+	b, err := io.ReadAll(r)
+	if err != nil {
+		return err
+	}
+	return min.Minify("text/html", w, strings.NewReader(string(b)))
+}
 
 func handleHTML(fp string) string {
 	finalFilepath := filepath.Join("/",
@@ -203,6 +210,7 @@ func parseWithLayout(fp string, data map[string]interface{}) (*template.Template
 
 // walkNode searches for file references in HTML node and replaces them with final filepaths of build.
 func walkNode(n *html.Node) {
+	// Replace file references
 	if n.Type == html.ElementNode {
 		for i, v := range n.Attr {
 			if v.Key == "href" || v.Key == "src" {
@@ -211,6 +219,7 @@ func walkNode(n *html.Node) {
 		}
 	}
 
+	// Recurse on children
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
 		walkNode(c)
 	}
@@ -219,25 +228,30 @@ func walkNode(n *html.Node) {
 // CSS
 
 func processCSS(w io.Writer, r io.Reader) error {
-	return min.Minify("text/css", w, r)
+	if err := min.Minify("text/css", w, r); err != nil {
+		return fmt.Errorf("cannot minify: %w", err)
+	}
+	return nil
 }
 
-// Sass
+// SASS
 
 func processSass(w io.Writer, r io.Reader) error {
 	// Read input content for transpilation
 	b, err := io.ReadAll(r)
 	if err != nil {
-		return err
+		panic(err)
 	}
 
 	// Transpile
 	res, err := sassTranspiler.Execute(string(b))
 	if err != nil {
-		logFatal(err)
-		return err
+		return fmt.Errorf("cannot transpile: %w", err)
 	}
 
 	// Minify
-	return min.Minify("text/css", w, strings.NewReader(res.CSS))
+	if err := min.Minify("text/css", w, strings.NewReader(res.CSS)); err != nil {
+		return fmt.Errorf("cannot minify: %w", err)
+	}
+	return nil
 }
